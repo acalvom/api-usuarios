@@ -227,22 +227,6 @@ class ApiResultsController extends AbstractController
     }
 
     /**
-     * Response 404 Not Found
-     * @param string $format
-     *
-     * @return Response
-     */
-    private function error404(string $format): Response
-    {
-        $message = new Message(Response::HTTP_NOT_FOUND, Response::$statusTexts[404]);
-        return Utils::apiResponse(
-            $message->getCode(),
-            $message,
-            $format
-        );
-    }
-
-    /**
      * POST action
      * Summary: Creates a Result resource.
      *
@@ -301,17 +285,16 @@ class ApiResultsController extends AbstractController
             );
         }
 
+        // time
+        (isset($postData[Result::TIME_ATTR])) ? $time = $postData[Result::TIME_ATTR]
+            : $time = new DateTime('now');
+
         // 201 - Created
         $resultEnt = new Result(
             $postData[Result::RESULT_ATTR],
             $user_exist,
-            new DateTime('now')
-
+            $time
         );
-//        // time
-//        if (isset($postData[Result::TIME_ATTR])) {
-//            $resultEnt->setTime($postData[Result::TIME_ATTR] ?? new DateTime('now'));
-//        }
 
         $this->entityManager->persist($resultEnt);
         $this->entityManager->flush();
@@ -325,5 +308,22 @@ class ApiResultsController extends AbstractController
             ]
         );
     }
+
+    /**
+     * Response 404 Not Found
+     * @param string $format
+     *
+     * @return Response
+     */
+    private function error404(string $format): Response
+    {
+        $message = new Message(Response::HTTP_NOT_FOUND, Response::$statusTexts[404]);
+        return Utils::apiResponse(
+            $message->getCode(),
+            $message,
+            $format
+        );
+    }
+
 
 }
