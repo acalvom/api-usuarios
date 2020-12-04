@@ -4,6 +4,7 @@
 namespace App\Controller;
 
 
+use App\Entity\Message;
 use App\Entity\Result;
 use App\Entity\User;
 use App\Utility\Utils;
@@ -85,6 +86,70 @@ class ApiResultsController extends AbstractController
                 self::HEADER_CACHE_CONTROL => 'must-revalidate',
                 self::HEADER_ETAG => md5(json_encode($results)),
             ]
+        );
+    }
+
+    /**
+     * GET Action
+     * Summary: Retrieves a Result resource based on a single ID.
+     * Notes: Returns the result identified by &#x60;resultId&#x60;.
+     *
+     * @param Request $request
+     * @param  int $resultId Result id
+     * @return Response
+     * @Route(
+     *     path="/{resultId}.{_format}",
+     *     defaults={ "_format": null },
+     *     requirements={
+     *          "resultId": "\d+",
+     *          "_format": "json|xml"
+     *     },
+     *     methods={ Request::METHOD_GET },
+     *     name="get"
+     * )
+     *
+     * @Security(
+     *     expression="is_granted('IS_AUTHENTICATED_FULLY')",
+     *     statusCode=401,
+     *     message="`Unauthorized`: Invalid credentials."
+     * )
+     */
+
+    public function getAction(Request $request, int $resultId): Response
+    {
+        $result = $this->entityManager
+            ->getRepository(Result::class)
+            ->find($resultId);
+        $format = Utils::getFormat($request);
+
+        if (empty($result)) {
+            return $this->error404($format);
+        }
+
+        return Utils::apiResponse(
+            Response::HTTP_OK,
+            [ Result::RESULT_ATTR => $result ],
+            $format,
+            [
+                self::HEADER_CACHE_CONTROL => 'must-revalidate',
+                self::HEADER_ETAG => md5(json_encode($result)),
+            ]
+        );
+    }
+
+    /**
+     * Response 404 Not Found
+     * @param string $format
+     *
+     * @return Response
+     */
+    private function error404(string $format): Response
+    {
+        $message = new Message(Response::HTTP_NOT_FOUND, Response::$statusTexts[404]);
+        return Utils::apiResponse(
+            $message->getCode(),
+            $message,
+            $format
         );
     }
 }
