@@ -8,6 +8,7 @@ use App\Entity\Message;
 use App\Entity\Result;
 use App\Entity\User;
 use App\Utility\Utils;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -55,7 +56,7 @@ class ApiResultsController extends AbstractController
      *     path=".{_format}/{sort?id}",
      *     defaults={ "_format": "json", "sort": "id" },
      *     requirements={
-     *         "sort": "id|result",
+     *         "sort": "id|$resultEnt",
      *         "_format": "json|xml"
      *     },
      *     methods={ Request::METHOD_GET },
@@ -82,7 +83,7 @@ class ApiResultsController extends AbstractController
 
         return Utils::apiResponse(
             Response::HTTP_OK,
-            [ 'results' => array_map(fn ($r) =>  ['result' => $r], $results) ],
+            [ 'results' => array_map(fn ($r) =>  ['$resultEnt' => $r], $results) ],
             $format,
             [
                 self::HEADER_CACHE_CONTROL => 'must-revalidate',
@@ -119,22 +120,22 @@ class ApiResultsController extends AbstractController
 
     public function getAction(Request $request, int $resultId): Response
     {
-        $result = $this->entityManager
+        $resultEnt = $this->entityManager
             ->getRepository(Result::class)
             ->find($resultId);
         $format = Utils::getFormat($request);
 
-        if (empty($result)) {
+        if (empty($resultEnt)) {
             return $this->error404($format);
         }
 
         return Utils::apiResponse(
             Response::HTTP_OK,
-            [ Result::RESULT_ATTR => $result ],
+            [ Result::RESULT_ENT_ATTR => $resultEnt ],
             $format,
             [
                 self::HEADER_CACHE_CONTROL => 'must-revalidate',
-                self::HEADER_ETAG => md5(json_encode($result)),
+                self::HEADER_ETAG => md5(json_encode($resultEnt)),
             ]
         );
     }
@@ -211,15 +212,15 @@ class ApiResultsController extends AbstractController
         }
         $format = Utils::getFormat($request);
 
-        $result = $this->entityManager
+        $resultEnt = $this->entityManager
             ->getRepository(Result::class)
             ->find($resultId);
 
-        if (null === $result) {   // 404 - Not Found
+        if (null === $resultEnt) {   // 404 - Not Found
             return $this->error404($format);
         }
 
-        $this->entityManager->remove($result);
+        $this->entityManager->remove($resultEnt);
         $this->entityManager->flush();
 
         return Utils::apiResponse(Response::HTTP_NO_CONTENT);
@@ -240,4 +241,89 @@ class ApiResultsController extends AbstractController
             $format
         );
     }
+
+    /**
+     * POST action
+     * Summary: Creates a Result resource.
+     *
+     * @param Request $request request
+     * @return Response
+     * @Route(
+     *     path=".{_format}",
+     *     defaults={ "_format": null },
+     *     requirements={
+     *         "_format": "json|xml"
+     *     },
+     *     methods={ Request::METHOD_POST },
+     *     name="post"
+     * )
+     *
+     * @Security(
+     *     expression="is_granted('IS_AUTHENTICATED_FULLY')",
+     *     statusCode=401,
+     *     message="`Unauthorized`: Invalid credentials."
+     * )
+     */
+    public function postAction(Request $request): Response
+    {
+        // Puede crear un usuario sólo si tiene ROLE_ADMIN
+        if (!$this->isGranted(self::ROLE_ADMIN)) {
+            throw new HttpException(   // 403
+                Response::HTTP_FORBIDDEN,
+                '`Forbidden`: you don\'t have permission to access'
+            );
+        }
+        $body = $request->getContent();
+        $postData = json_decode($body, true);
+        $format = Utils::getFormat($request);
+
+        if (!isset($postData[Result::RESULT_ATTR], $postData[User::EMAIL_ATTR])) {
+            // 422 - Unprocessable Entity -> Faltan datos
+            $message = new Message(Response::HTTP_UNPROCESSABLE_ENTITY, Response::$statusTexts[422]);
+            return Utils::apiResponse(
+                $message->getCode(),
+                $message,
+                $format
+            );
+        }
+
+        // hay datos -> procesarlos
+        $user_exist = $this->entityManager
+            ->getRepository(User::class)
+            ->findOneBy([ User::EMAIL_ATTR => $postData[User::EMAIL_ATTR] ]);
+
+        if ($user_exist === null) {    // 400 - Bad Request
+            $message = new Message(Response::HTTP_BAD_REQUEST, Response::$statusTexts[400]);
+            return Utils::apiResponse(
+                $message->getCode(),
+                $message,
+                $format
+            );
+        }
+
+        // 201 - Created
+        $resultEnt = new Result(
+            $postData[Result::RESULT_ATTR],
+            $user_exist,
+            new DateTime('now')
+
+        );
+//        // time
+//        if (isset($postData[Result::TIME_ATTR])) {
+//            $resultEnt->setTime($postData[Result::TIME_ATTR] ?? new DateTime('now'));
+//        }
+
+        $this->entityManager->persist($resultEnt);
+        $this->entityManager->flush();
+
+        return Utils::apiResponse(
+            Response::HTTP_CREATED,
+            [ Result::RESULT_ENT_ATTR => $resultEnt ],
+            $format,
+            [
+                'Location' => self::RUTA_API . '/' . $resultEnt->getId(),
+            ]
+        );
+    }
+
 }
