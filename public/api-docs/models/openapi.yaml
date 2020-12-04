@@ -238,6 +238,32 @@ paths:
           $ref: '#/components/responses/403_Forbidden_Response'
         '404':
           $ref: '#/components/responses/404_Resource_Not_Found_Response'
+  '/results/{resultId}':
+    get:
+      tags: [ Results ]
+      summary: Retrieves a Result resource based on a single ID.
+      description: 'Returns the result identified by `resultId`.'
+      operationId: api_results_get
+      security:
+        - MiWApiSecurity: [ ]
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+        '401':
+          $ref: '#/components/responses/401_Unauthorized_Response'
+        '403':
+          $ref: '#/components/responses/403_Forbidden_Response'
+        '404':
+          $ref: '#/components/responses/404_Resource_Not_Found_Response'
 components:
   headers:
     ETag:
@@ -307,10 +333,31 @@ components:
           description: 'Result Id'
           type: integer
           format: int64
-        userId:
-          description: 'User Id'
-          type: integer
-          format: int64
+        user:
+          type: object
+          properties:
+            userId:
+              description: 'User Id'
+              type: integer
+              format: int64
+            email:
+              description: 'User email'
+              type: string
+              format: email
+            roles:
+              description: 'User roles'
+              type: string
+              format: json
+            _links:
+              description: link relations
+              type: object
+              properties:
+                parent:
+                  type: object
+                  properties: { "href": { "type": "string", "format": "url" } }
+                self:
+                  type: object
+                  properties: { "href": { "type": "string", "format": "url" } }
         result:
           description: 'Result'
           type: integer
@@ -331,7 +378,15 @@ components:
       example:
         result:
           id: 20
-          userId: 10
+          user:
+            userId: 1508
+            email: 'miw.etsisi@upm.es'
+            roles: [ 'ROLE_USER' ]
+            _links:
+              parent:
+                href: /api/v1/users
+              self:
+                href: /api/v1/users/1508
           result: 5
           time: '2020-10-04 17:32:28'
           _links:
