@@ -370,6 +370,7 @@ class ApiResultsController extends AbstractController
                 );
             }
             $resultEnt->setResult($postData[Result::RESULT_ATTR]);
+            $resultEnt->setTime(new DateTime('now'));
         }
 
         $this->entityManager->flush();
