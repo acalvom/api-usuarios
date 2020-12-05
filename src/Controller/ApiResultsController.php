@@ -141,6 +141,63 @@ class ApiResultsController extends AbstractController
     }
 
     /**
+     * GET User Results Action
+     * Summary: Retrieves the Results from an User resource based on an e-mail.
+     * Notes: Returns the results identified by &#x60;userId&#x60;.
+     *
+     * @param Request $request
+     * @param  int $resultId Result id
+     * @return Response
+     * @Route(
+     *     path="/all/{userId}.{_format}",
+     *     defaults={ "_format": null },
+     *     requirements={
+     *          "userId": "\d+",
+     *          "_format": "json|xml"
+     *     },
+     *     methods={ Request::METHOD_GET },
+     *     name="getuserres"
+     * )
+     *
+     * @Security(
+     *     expression="is_granted('IS_AUTHENTICATED_FULLY')",
+     *     statusCode=401,
+     *     message="`Unauthorized`: Invalid credentials."
+     * )
+     */
+
+    public function getUserResultsAction(Request $request, int $userId): Response
+    {
+        $format = Utils::getFormat($request);
+        $user = $this->entityManager
+            ->getRepository(User::class)
+            ->find($userId);
+
+        if (null === $user) {    // 404 - Not Found
+            return $this->error404($format);
+        }
+
+        $results = $this->entityManager
+            ->getRepository(Result::class)
+            ->findBy([Result::USER_ATTR=>$user]);
+
+        if (empty($results)) {
+            return $this->error404($format);
+        }
+
+        return Utils::apiResponse(
+            Response::HTTP_OK,
+            [ 'results' => array_map(fn ($r) =>  ['$resultEnt' => $r], $results) ],
+            $format,
+            [
+                self::HEADER_CACHE_CONTROL => 'must-revalidate',
+                self::HEADER_ETAG => md5(json_encode($results)),
+            ]
+        );
+    }
+
+
+    /**
      * Summary: Provides the list of HTTP supported methods
      * Notes: Return a &#x60;Allow&#x60; header with a list of HTTP supported methods.
      *
