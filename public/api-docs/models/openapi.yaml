@@ -360,6 +360,32 @@ paths:
           headers:
             Allow:
               $ref: '#/components/headers/Allow'
+  '/results/all/{userId}':
+    get:
+      tags: [ Results ]
+      summary: Retrieves all the Results from an resource based on a single user ID.
+      description: 'Returns the results from and user identified by `userId`.'
+      operationId: api_results_user_get
+      security:
+        - MiWApiSecurity: [ ]
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+        '401':
+          $ref: '#/components/responses/401_Unauthorized_Response'
+        '403':
+          $ref: '#/components/responses/403_Forbidden_Response'
+        '404':
+          $ref: '#/components/responses/404_Resource_Not_Found_Response'
 components:
   headers:
     ETag:
