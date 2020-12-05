@@ -302,6 +302,33 @@ paths:
           $ref: '#/components/responses/403_Forbidden_Response'
         '404':
           $ref: '#/components/responses/404_Resource_Not_Found_Response'
+    put:
+      tags:
+        - Results
+      summary: Updates the Result resource.
+      description: 'Updates the result identified by `resultId`.'
+      operationId: api_results_put
+      security:
+        - MiWApiSecurity: [ ]
+      parameters:
+        - $ref: '#/components/parameters/resultId'
+      requestBody:
+        $ref: '#/components/requestBodies/ResultRequestBodyUpdate'
+      responses:
+        '209':
+          description: '`Content Returned`: result previously existed and is now updated'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '400':
+          $ref: '#/components/responses/400_BadRequest_Response'
+        '401':
+          $ref: '#/components/responses/401_Unauthorized_Response'
+        '403':
+          $ref: '#/components/responses/403_Forbidden_Response'
+        '404':
+          $ref: '#/components/responses/404_Resource_Not_Found_Response'
     delete:
       tags: [ Results ]
       summary: Removes the Result resource.
@@ -587,6 +614,25 @@ components:
               result: 7
               email: miw.etsisi@upm.es
               time: null
+    ResultRequestBodyUpdate:
+      description: 'Update `Result` data'
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                description: 'Result Id'
+                type: integer
+                format: int64
+              result:
+                description: 'Result'
+                type: integer
+                format: int64
+            example:
+              id: 1
+              result: 10
 
   parameters:
     userId:
