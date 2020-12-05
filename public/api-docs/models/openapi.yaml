@@ -110,13 +110,13 @@ paths:
             Location:
               $ref: '#/components/headers/Location'
         '400':
-          $ref: '#/components/responses/400_BadRequest_Response'
+          $ref: '#/components/responses/400_EmailExists_BadRequest_Response'
         '401':
           $ref: '#/components/responses/401_Unauthorized_Response'
         '403':
           $ref: '#/components/responses/403_Forbidden_Response'
         '422':
-          $ref: '#/components/responses/422_UnprocessableEntity_Response'
+          $ref: '#/components/responses/422_User_UnprocessableEntity_Response'
     options:
       tags: [ Users ]
       summary: Provides the list of HTTP supported methods.
@@ -174,7 +174,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
         '400':
-          $ref: '#/components/responses/400_BadRequest_Response'
+          $ref: '#/components/responses/400_EmailExists_BadRequest_Response'
         '401':
           $ref: '#/components/responses/401_Unauthorized_Response'
         '403':
@@ -258,13 +258,13 @@ paths:
             Location:
               $ref: '#/components/headers/Location'
         '400':
-          $ref: '#/components/responses/400_BadRequest_Response'
+          $ref: '#/components/responses/400_UserDoesNotExist_BadRequest_Response'
         '401':
           $ref: '#/components/responses/401_Unauthorized_Response'
         '403':
           $ref: '#/components/responses/403_Forbidden_Response'
         '422':
-          $ref: '#/components/responses/422_UnprocessableEntity_Response'
+          $ref: '#/components/responses/422_ResultPost_UnprocessableEntity_Response'
     options:
       tags: [ Results ]
       summary: Provides the list of HTTP supported methods.
@@ -321,14 +321,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Result'
-        '400':
-          $ref: '#/components/responses/400_BadRequest_Response'
         '401':
           $ref: '#/components/responses/401_Unauthorized_Response'
         '403':
           $ref: '#/components/responses/403_Forbidden_Response'
         '404':
           $ref: '#/components/responses/404_Resource_Not_Found_Response'
+        '422':
+          $ref: '#/components/responses/422_ResultUpdate_UnprocessableEntity_Response'
     delete:
       tags: [ Results ]
       summary: Removes the Result resource.
@@ -492,15 +492,33 @@ components:
               href: /api/v1/results/20
 
   responses:
-    400_BadRequest_Response:
+    400_EmailExists_BadRequest_Response:
       description: "`BAD REQUEST`: e-mail already exists"
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Message'
           examples:
-            response-400:
-              $ref: '#/components/examples/response-400'
+            response-400-user:
+              $ref: '#/components/examples/response-400-email-exists'
+    400_UserDoesNotExist_BadRequest_Response:
+      description: "`BAD REQUEST`: this user does not exist"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Message'
+          examples:
+            response-400-result:
+              $ref: '#/components/examples/response-400-user-not-exist'
+    400_ResultrDoesNotExist_BadRequest_Response:
+      description: "`BAD REQUEST`: this result does not exist"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Message'
+          examples:
+            response-400-result:
+              $ref: '#/components/examples/response-400-result-not-exist'
     401_Unauthorized_Response:
       description: '`Unauthorized`: invalid Authorization header'
       content:
@@ -528,15 +546,33 @@ components:
           examples:
             response-404:
               $ref: '#/components/examples/response-404'
-    422_UnprocessableEntity_Response:
+    422_User_UnprocessableEntity_Response:
       description: "`UNPROCESSABLE ENTITY`: e-mail or password is left out"
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Message'
           examples:
-            response-422:
-              $ref: '#/components/examples/response-422'
+            response-422-user:
+              $ref: '#/components/examples/response-422-user'
+    422_ResultPost_UnprocessableEntity_Response:
+      description: "`UNPROCESSABLE ENTITY`: result or e-mail is left out out"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Message'
+          examples:
+            response-422-result-post:
+              $ref: '#/components/examples/response-422-result-post'
+    422_ResultUpdate_UnprocessableEntity_Response:
+      description: "`UNPROCESSABLE ENTITY`: result is left out out"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Message'
+          examples:
+            response-422-result-update:
+              $ref: '#/components/examples/response-422-result-update'
 
   requestBodies:
     UserRequestBody:
@@ -622,16 +658,11 @@ components:
           schema:
             type: object
             properties:
-              id:
-                description: 'Result Id'
-                type: integer
-                format: int64
               result:
                 description: 'Result'
                 type: integer
                 format: int64
             example:
-              id: 1
               result: 10
 
   parameters:
@@ -650,10 +681,18 @@ components:
       schema: { "type": "integer", pattern: '^\d+$' }
 
   examples:
-    response-400:
+    response-400-email-exists:
       value:
         code: 400
         message: 'BAD REQUEST: e-mail already exists'
+    response-400-user-not-exist:
+      value:
+        code: 400
+        message: 'BAD REQUEST: user does not exist'
+    response-400-result-not-exist:
+      value:
+        code: 400
+        message: 'BAD REQUEST: result does not exist'
     response-401:
       value:
         code: 401
@@ -666,10 +705,19 @@ components:
       value:
         code: 404
         message: 'NOT FOUND: Resource not found'
-    response-422:
+    response-422-user:
       value:
         code: 422
         message: 'UNPROCESSABLE ENTITY: e-mail or password is left out'
+    response-422-result-post:
+      value:
+        code: 422
+        message: 'UNPROCESSABLE ENTITY: result or e-mail is left out'
+
+    response-422-result-update:
+      value:
+        code: 422
+        message: 'UNPROCESSABLE ENTITY: result is left out'
 
   securitySchemes:
     MiWApiSecurity:
