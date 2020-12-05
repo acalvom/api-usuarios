@@ -83,7 +83,7 @@ class ApiResultsController extends AbstractController
 
         return Utils::apiResponse(
             Response::HTTP_OK,
-            [ 'results' => array_map(fn ($r) =>  ['$resultEnt' => $r], $results) ],
+            [ 'results' => array_map(fn ($r) =>  ['resultEnt' => $r], $results) ],
             $format,
             [
                 self::HEADER_CACHE_CONTROL => 'must-revalidate',
@@ -142,11 +142,11 @@ class ApiResultsController extends AbstractController
 
     /**
      * GET User Results Action
-     * Summary: Retrieves the Results from an User resource based on an e-mail.
+     * Summary: Retrieves the Results from an User resource based on the Id.
      * Notes: Returns the results identified by &#x60;userId&#x60;.
      *
      * @param Request $request
-     * @param  int $resultId Result id
+     * @param int $userId
      * @return Response
      * @Route(
      *     path="/all/{userId}.{_format}",
@@ -187,7 +187,7 @@ class ApiResultsController extends AbstractController
 
         return Utils::apiResponse(
             Response::HTTP_OK,
-            [ 'results' => array_map(fn ($r) =>  ['$resultEnt' => $r], $results) ],
+            [ 'results' => array_map(fn ($r) =>  ['resultEnt' => $r], $results) ],
             $format,
             [
                 self::HEADER_CACHE_CONTROL => 'must-revalidate',
