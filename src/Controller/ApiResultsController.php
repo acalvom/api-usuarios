@@ -250,7 +250,7 @@ class ApiResultsController extends AbstractController
      */
     public function postAction(Request $request): Response
     {
-        // Puede crear un usuario sólo si tiene ROLE_ADMIN
+        // Puede crear un resultado sólo si tiene ROLE_ADMIN
         if (!$this->isGranted(self::ROLE_ADMIN)) {
             throw new HttpException(   // 403
                 Response::HTTP_FORBIDDEN,
@@ -306,6 +306,78 @@ class ApiResultsController extends AbstractController
             [
                 'Location' => self::RUTA_API . '/' . $resultEnt->getId(),
             ]
+        );
+    }
+
+    /**
+     * PUT action
+     * Summary: Updates the Result resource.
+     * Notes: Updates the result identified by &#x60;resultId&#x60;.
+     *
+     * @param Request $request request
+
+     * @param int $resultId Result id
+     * @return  Response
+     * @Route(
+     *     path="/{resultId}.{_format}",
+     *     defaults={ "_format": null },
+     *     requirements={
+     *          "resultId": "\d+",
+     *         "_format": "json|xml"
+     *     },
+     *     methods={ Request::METHOD_PUT },
+     *     name="put"
+     * )
+     *
+     * @Security(
+     *     expression="is_granted('IS_AUTHENTICATED_FULLY')",
+     *     statusCode=401,
+     *     message="`Unauthorized`: Invalid credentials."
+     * )
+     */
+    public function putAction(Request $request, int $resultId): Response
+    {
+        // Puede editar otro resultado diferente sólo si tiene ROLE_ADMIN
+        if (!$this->isGranted(self::ROLE_ADMIN)) {
+            throw new HttpException(   // 403
+                Response::HTTP_FORBIDDEN,
+                '`Forbidden`: you don\'t have permission to access'
+            );
+        }
+        $body = $request->getContent();
+        $postData = json_decode($body, true);
+        $format = Utils::getFormat($request);
+
+        $resultEnt = $this->entityManager
+            ->getRepository(Result::class)
+            ->find($resultId);
+
+        if (null === $resultEnt) {    // 404 - Not Found
+            return $this->error404($format);
+        }
+
+        if (isset($postData[Result::ID_ATTR],$postData[Result::RESULT_ATTR])) {
+            $result_exist = $this->entityManager
+                ->getRepository(Result::class)
+                ->findOneBy([ Result::ID_ATTR => $postData[Result::ID_ATTR] ]);
+
+            if (null === $result_exist) {    // 400 - Bad Request
+                $message = new Message(Response::HTTP_BAD_REQUEST, Response::$statusTexts[400]);
+                return Utils::apiResponse(
+                    $message->getCode(),
+                    $message,
+                    $format
+                );
+            }
+            $resultEnt->setResult($postData[Result::RESULT_ATTR]);
+        }
+
+        $this->entityManager->flush();
+
+        return Utils::apiResponse(
+            209,                        // 209 - Content Returned
+            [ Result::RESULT_ENT_ATTR => $resultEnt ],
+            $format
         );
     }
 
