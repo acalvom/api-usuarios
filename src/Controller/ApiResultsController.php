@@ -356,23 +356,17 @@ class ApiResultsController extends AbstractController
             return $this->error404($format);
         }
 
-        if (isset($postData[Result::ID_ATTR],$postData[Result::RESULT_ATTR])) {
-            $result_exist = $this->entityManager
-                ->getRepository(Result::class)
-                ->findOneBy([ Result::ID_ATTR => $postData[Result::ID_ATTR] ]);
-
-            if (null === $result_exist) {    // 400 - Bad Request
-                $message = new Message(Response::HTTP_BAD_REQUEST, Response::$statusTexts[400]);
-                return Utils::apiResponse(
-                    $message->getCode(),
-                    $message,
-                    $format
-                );
-            }
-            $resultEnt->setResult($postData[Result::RESULT_ATTR]);
-            $resultEnt->setTime(new DateTime('now'));
+        if (!isset($postData[Result::RESULT_ATTR])) {
+            // 422 - Unprocessable Entity -> Faltan datos
+            $message = new Message(Response::HTTP_UNPROCESSABLE_ENTITY, Response::$statusTexts[422]);
+            return Utils::apiResponse(
+                $message->getCode(),
+                $message,
+                $format
+            );
         }
-
+        $resultEnt->setResult($postData[Result::RESULT_ATTR]);
+        $resultEnt->setTime(new DateTime('now'));
         $this->entityManager->flush();
 
         return Utils::apiResponse(
