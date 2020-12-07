@@ -57,13 +57,44 @@ class ApiResultsControllerTest extends BaseTestCase
         self::assertNotEmpty($response->headers->get('Allow'));
     }
 
+    /**
+     * Test GET /results 404 Not Found
+     *
+     * @return void
+     */
+    public function testCGetResultAction404(): void
+    {
+        $headers = $this->getTokenHeaders();
+        self::$client->request(
+            Request::METHOD_GET,
+            self::RUTA_API,
+            [],
+            [],
+            $headers
+        );
+        $response = self::$client->getResponse();
 
+        self::assertEquals(
+            Response::HTTP_NOT_FOUND,
+            $response->getStatusCode()
+        );
+        $r_body = (string) $response->getContent();
+        self::assertContains(Message::CODE_ATTR, $r_body);
+        self::assertContains(Message::MESSAGE_ATTR, $r_body);
+        $r_data = json_decode($r_body, true);
+        $r_body = (string) $response->getContent();
+        self::assertJson($r_body);
+        self::assertStringContainsString(Message::CODE_ATTR, $r_body);
+        self::assertStringContainsString(Message::MESSAGE_ATTR, $r_body);
 
+        self::assertSame(Response::HTTP_NOT_FOUND, $r_data[Message::CODE_ATTR]);
+        self::assertSame(Response::$statusTexts[404], $r_data[Message::MESSAGE_ATTR]);
+    }
 
 
     /**
      * Test POST /results 201 Created
-     *
+     * @depends testCGetResultAction404
      * @return array result data
      */
     public function testPostResultAction201Created(): array
