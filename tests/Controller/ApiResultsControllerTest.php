@@ -335,7 +335,34 @@ class ApiResultsControllerTest extends BaseTestCase
         );
     }
 
+    /**
+     * Test DELETE /results/{resultId} 204 No Content
+     *
+     * @param   array $resultEnt result returned by testPostResultAction201Created()
+     * @return  int resultId
+     * @depends testPostResultAction201Created
+     * @depends testGetResultAction200Ok
+     * @depends testPutResultAction422UnprocessableEntity
+     */
+    public function testDeleteResultAction204NoContent(array $resultEnt): int
+    {
+        $headers = $this->getTokenHeaders();
+        self::$client->request(
+            Request::METHOD_DELETE,
+            self::RUTA_API . '/' . $resultEnt['id'],
+            [],
+            [],
+            $headers
+        );
+        $response = self::$client->getResponse();
+        self::assertSame(
+            Response::HTTP_NO_CONTENT,
+            $response->getStatusCode()
+        );
+        self::assertEmpty((string)$response->getContent());
 
+        return $resultEnt['id'];
+    }
 
 
 }
