@@ -290,4 +290,50 @@ class ApiResultsControllerTest extends BaseTestCase
             $r_data[Message::MESSAGE_ATTR]
         );
     }
+
+    /**
+     * Test PUT /results/{resultId} 422 Bad Request
+     *
+     * @param   array $resultEnt result returned by testPutUserAction209()
+     * @return  void
+     * @depends testPutResultAction209ContentReturned
+     */
+    public function testPutResultAction422BadRequest(array $resultEnt): void
+    {
+        $headers = $this->getTokenHeaders();
+        $p_data = [
+            // En los datos se envía el id en lugar del resultado
+            Result::ID_ATTR => $resultEnt[Result::ID_ATTR]
+        ];
+
+        self::$client->request(
+            Request::METHOD_PUT,
+            self::RUTA_API . '/' . $resultEnt['id'],
+            [],
+            [],
+            $headers,
+            json_encode($p_data)
+        );
+        $response = self::$client->getResponse();
+        self::assertSame(
+            Response::HTTP_UNPROCESSABLE_ENTITY,
+            $response->getStatusCode()
+        );
+
+        $r_body = (string) $response->getContent();
+        self::assertJson($r_body);
+        self::assertStringContainsString(Message::CODE_ATTR, $r_body);
+        self::assertStringContainsString(Message::MESSAGE_ATTR, $r_body);
+        $r_data = json_decode($r_body, true);
+        self::assertSame(
+            Response::HTTP_UNPROCESSABLE_ENTITY,
+            $r_data[Message::CODE_ATTR]
+        );
+        self::assertSame(
+            Response::$statusTexts[422],
+            $r_data[Message::MESSAGE_ATTR]
+        );
+    }
+
+
 }
