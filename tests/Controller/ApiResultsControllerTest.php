@@ -251,11 +251,11 @@ class ApiResultsControllerTest extends BaseTestCase
     }
 
     /**
-     * Test PUT /results/{resultId} 404 Bad Request
+     * Test PUT /results/{resultId} 404 Not found
      *
      * @return  void
      */
-    public function testPutResultAction404BadRequest(): void
+    public function testPutResultAction404Notfound(): void
     {
         $updatedResult = self::$faker->randomDigitNotNull;
         $headers = $this->getTokenHeaders();
@@ -292,13 +292,13 @@ class ApiResultsControllerTest extends BaseTestCase
     }
 
     /**
-     * Test PUT /results/{resultId} 422 Bad Request
+     * Test PUT /results/{resultId} 422 Unprocessable Entity
      *
-     * @param   array $resultEnt result returned by testPutUserAction209()
+     * @param   array $resultEnt result returned by testPutResultAction209ContentReturned()
      * @return  void
      * @depends testPutResultAction209ContentReturned
      */
-    public function testPutResultAction422BadRequest(array $resultEnt): void
+    public function testPutResultAction422UnprocessableEntity(array $resultEnt): void
     {
         $headers = $this->getTokenHeaders();
         $p_data = [
@@ -334,6 +334,8 @@ class ApiResultsControllerTest extends BaseTestCase
             $r_data[Message::MESSAGE_ATTR]
         );
     }
+
+
 
 
 }
