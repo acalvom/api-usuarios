@@ -138,8 +138,21 @@ class ApiResultsControllerTest extends BaseTestCase
         return $resultEnt['resultEnt'];
     }
 
-    public function testCgetAction()
+    /**
+     * Test GET /results 200 Ok
+     *
+     * @return void
+     * @depends testPostResultAction201Created
+     */
+    public function testCGetResultsAction200Ok(): void
     {
-
+        $headers = $this->getTokenHeaders();
+        self::$client->request(Request::METHOD_GET, self::RUTA_API, [], [], $headers);
+        $response = self::$client->getResponse();
+        self::assertTrue($response->isSuccessful());
+        self::assertNotNull($response->getEtag());
+        self::assertJson($response->getContent());
+        $results = json_decode($response->getContent(), true);
+        self::assertArrayHasKey('results', $results);
     }
 }
