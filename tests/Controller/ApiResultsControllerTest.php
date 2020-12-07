@@ -5,6 +5,7 @@ namespace App\Tests\Controller;
 use App\Entity\Message;
 use App\Entity\Result;
 use App\Entity\User;
+use Faker\Factory as FakerFactoryAlias;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -148,6 +149,50 @@ class ApiResultsControllerTest extends BaseTestCase
         $r_data = json_decode($r_body, true);
         self::assertSame(Response::HTTP_BAD_REQUEST, $r_data[Message::CODE_ATTR]);
         self::assertSame(Response::$statusTexts[400], $r_data[Message::MESSAGE_ATTR]);
+    }
+
+    /**
+     * Test POST /users 422 Unprocessable Entity
+     *
+     * @param int|null $result
+     * @param null|string $email
+     * @return void
+     * @dataProvider resultProvider422
+     */
+    public function testPostUserAction422UnprocessableEntity(?int $result, ?string $email): void
+    {
+        $headers = $this->getTokenHeaders();
+        $p_data = [
+            Result::RESULT_ATTR => $result,
+            User::EMAIL_ATTR => $email,
+        ];
+
+        self::$client->request(
+            Request::METHOD_POST,
+            self::RUTA_API,
+            [],
+            [],
+            $headers,
+            json_encode($p_data)
+        );
+        $response = self::$client->getResponse();
+        self::assertSame(
+            Response::HTTP_UNPROCESSABLE_ENTITY,
+            $response->getStatusCode()
+        );
+        $r_body = (string) $response->getContent();
+        self::assertJson($r_body);
+        self::assertStringContainsString(Message::CODE_ATTR, $r_body);
+        self::assertStringContainsString(Message::MESSAGE_ATTR, $r_body);
+        $r_data = json_decode($r_body, true);
+        self::assertSame(
+            Response::HTTP_UNPROCESSABLE_ENTITY,
+            $r_data[Message::CODE_ATTR]
+        );
+        self::assertSame(
+            Response::$statusTexts[422],
+            $r_data[Message::MESSAGE_ATTR]
+        );
     }
 
     /**
@@ -364,5 +409,22 @@ class ApiResultsControllerTest extends BaseTestCase
         return $resultEnt['id'];
     }
 
+    /**
+     * Result provider (incomplete) -> 422 status code
+     *
+     * @return array result data
+     */
+    public function resultProvider422(): array
+    {
+        $faker = FakerFactoryAlias::create('es_ES');
+        $email = $faker->email;
+        $result = $faker->randomDigitNotNull;
+
+        return [
+            'no_result' => [ null, $email    ],
+            'no_email'  => [ $result, null  ],
+            'nothing'   => [ null,   null    ],
+        ];
+    }
 
 }
