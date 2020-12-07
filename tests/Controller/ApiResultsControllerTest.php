@@ -73,7 +73,7 @@ class ApiResultsControllerTest extends BaseTestCase
         $user = [
             User::EMAIL_ATTR => self::$faker->email,
             User::PASSWD_ATTR => self::$faker->password,
-            User::ROLES_ATTR => [ self::$faker->word ],
+            User::ROLES_ATTR => [self::$faker->word],
         ];
 
         // Se crea el usuario
@@ -89,7 +89,7 @@ class ApiResultsControllerTest extends BaseTestCase
 
         // Se crea el nuevo resultado
         $p_data = [
-            Result::RESULT_ATTR=>self::$faker->randomDigitNotNull,
+            Result::RESULT_ATTR => self::$faker->randomDigitNotNull,
             User::EMAIL_ATTR => $user['email'],
             Result::TIME_ATTR => null
         ];
@@ -126,7 +126,7 @@ class ApiResultsControllerTest extends BaseTestCase
     {
         $headers = $this->getTokenHeaders();
         $p_data = [
-            Result::RESULT_ATTR=>self::$faker->randomDigitNotNull,
+            Result::RESULT_ATTR => self::$faker->randomDigitNotNull,
             User::EMAIL_ATTR => self::$faker->email // Email de un usuario que no existe
         ];
 
@@ -150,7 +150,6 @@ class ApiResultsControllerTest extends BaseTestCase
         self::assertSame(Response::$statusTexts[400], $r_data[Message::MESSAGE_ATTR]);
     }
 
-
     /**
      * Test GET /results 200 Ok
      *
@@ -172,7 +171,7 @@ class ApiResultsControllerTest extends BaseTestCase
     /**
      * Test GET /results 200 Ok (XML)
      *
-     * @param   array $resultEnt result returned by testPostResultAction201Created()
+     * @param array $resultEnt result returned by testPostResultAction201Created()
      * @return  void
      * @depends testPostResultAction201Created
      */
@@ -195,7 +194,7 @@ class ApiResultsControllerTest extends BaseTestCase
     /**
      * Test GET /results/{resultId} 200 Ok
      *
-     * @param   array $resultEnt result returned by testPostResultAction201Created()
+     * @param array $resultEnt result returned by testPostResultAction201Created()
      * @return  void
      * @depends testPostResultAction201Created
      */
@@ -212,9 +211,43 @@ class ApiResultsControllerTest extends BaseTestCase
         $response = self::$client->getResponse();
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         self::assertNotNull($response->getEtag());
-        self::assertJson((string) $response->getContent());
-        $getResultEnt = json_decode((string) $response->getContent(), true);
+        self::assertJson((string)$response->getContent());
+        $getResultEnt = json_decode((string)$response->getContent(), true);
         self::assertSame($resultEnt['id'], $getResultEnt['resultEnt']['id']);
+    }
+
+    /**
+     * Test PUT /results/{resultId} 209 Content Returned
+     *
+     * @param array $resultEnt result returned by testPostResultAction201Created()
+     * @return  array modified result data
+     * @depends testPostResultAction201Created
+     */
+    public function testPutUserAction209ContentReturned(array $resultEnt): array
+    {
+        $updatedResult = self::$faker->randomDigitNotNull;
+        $headers = $this->getTokenHeaders();
+        $p_data = [
+            Result::RESULT_ATTR => $updatedResult
+        ];
+
+        self::$client->request(
+            Request::METHOD_PUT,
+            self::RUTA_API . '/' . $resultEnt['id'],
+            [],
+            [],
+            $headers,
+            json_encode($p_data)
+        );
+        $response = self::$client->getResponse();
+        self::assertSame(209, $response->getStatusCode());
+        self::assertJson($response->getContent());
+        $updatedResultEnt = json_decode($response->getContent(), true);
+        self::assertSame($resultEnt['id'], $updatedResultEnt['resultEnt']['id']);
+        self::assertSame($p_data[Result::RESULT_ATTR], $updatedResultEnt['resultEnt'][Result::RESULT_ATTR]);
+        self::assertArrayHasKey(Result::TIME_ATTR, $updatedResultEnt['resultEnt']);
+
+        return $updatedResultEnt['resultEnt'];
     }
 
 }
