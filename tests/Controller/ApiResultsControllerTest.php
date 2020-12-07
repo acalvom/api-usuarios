@@ -175,4 +175,30 @@ class ApiResultsControllerTest extends BaseTestCase
         self::assertNotNull($response->getEtag());
         self::assertTrue($response->headers->contains('content-type', 'application/xml'));
     }
+
+    /**
+     * Test GET /results/{resultId} 200 Ok
+     *
+     * @param   array $resultEnt result returned by testPostResultAction201Created()
+     * @return  void
+     * @depends testPostResultAction201Created
+     */
+    public function testGetResultAction200Ok(array $resultEnt): void
+    {
+        $headers = $this->getTokenHeaders();
+        self::$client->request(
+            Request::METHOD_GET,
+            self::RUTA_API . '/' . $resultEnt['id'],
+            [],
+            [],
+            $headers
+        );
+        $response = self::$client->getResponse();
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+        self::assertNotNull($response->getEtag());
+        self::assertJson((string) $response->getContent());
+        $getResultEnt = json_decode((string) $response->getContent(), true);
+        self::assertSame($resultEnt['id'], $getResultEnt['resultEnt']['id']);
+    }
+
 }
