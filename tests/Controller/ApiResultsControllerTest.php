@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 
+use App\Entity\Message;
 use App\Entity\Result;
 use App\Entity\User;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
  * @package App\Tests\Controller
  * @group   controllers
  *
- * @coversDefaultClass \App\Controller\ApiResultsControllerTest
+ * @coversDefaultClass \App\Controller\ApiResultsController
  */
 class ApiResultsControllerTest extends BaseTestCase
 {
@@ -55,27 +56,8 @@ class ApiResultsControllerTest extends BaseTestCase
         self::assertNotEmpty($response->headers->get('Allow'));
     }
 
-    public function testPutAction()
-    {
-
-    }
-
-    public function test__construct()
-    {
-
-    }
-
-    public function testGetAction()
-    {
-
-    }
 
     public function testGetUserResultsAction()
-    {
-
-    }
-
-    public function testDeleteAction()
     {
 
     }
@@ -134,6 +116,40 @@ class ApiResultsControllerTest extends BaseTestCase
 
         return $resultEnt['resultEnt'];
     }
+
+    /**
+     * Test POST /users 400 Bad Request
+     *
+     * @return  void
+     */
+    public function testPostResultAction400BadRequest(): void
+    {
+        $headers = $this->getTokenHeaders();
+        $p_data = [
+            Result::RESULT_ATTR=>self::$faker->randomDigitNotNull,
+            User::EMAIL_ATTR => self::$faker->email // Email de un usuario que no existe
+        ];
+
+        self::$client->request(
+            Request::METHOD_POST,
+            self::RUTA_API,
+            [],
+            [],
+            $headers,
+            json_encode($p_data)
+        );
+
+        $response = self::$client->getResponse();
+        self::assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
+        $r_body = $response->getContent();
+        self::assertJson($r_body);
+        self::assertStringContainsString(Message::CODE_ATTR, $r_body);
+        self::assertStringContainsString(Message::MESSAGE_ATTR, $r_body);
+        $r_data = json_decode($r_body, true);
+        self::assertSame(Response::HTTP_BAD_REQUEST, $r_data[Message::CODE_ATTR]);
+        self::assertSame(Response::$statusTexts[400], $r_data[Message::MESSAGE_ATTR]);
+    }
+
 
     /**
      * Test GET /results 200 Ok
