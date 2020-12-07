@@ -58,10 +58,8 @@ class ApiResultsControllerTest extends BaseTestCase
     }
 
 
-    public function testGetUserResultsAction()
-    {
 
-    }
+
 
     /**
      * Test POST /results 201 Created
@@ -479,21 +477,37 @@ class ApiResultsControllerTest extends BaseTestCase
     }
 
     /**
-     * Result provider -> 422 status code
+     * Test POST   /results 403 FORBIDDEN
+     * Test PUT    /results/{resultId} 403 FORBIDDEN
+     * Test DELETE /results/{resultId} 403 FORBIDDEN
      *
-     * @return array result data
+     * @param string $method
+     * @param string $uri
+     * @dataProvider routeProvider403()
+     * @depends testResultStatus404NotFound
+     * @return void
+     * @uses \App\EventListener\ExceptionListener
      */
-    public function resultProvider422(): array
+    public function testUserStatus403Forbidden(string $method, string $uri): void
     {
-        $faker = FakerFactoryAlias::create('es_ES');
-        $email = $faker->email;
-        $result = $faker->randomDigitNotNull;
+        $headers = $this->getTokenHeaders(
+            self::$role_user[User::EMAIL_ATTR],
+            self::$role_user[User::PASSWD_ATTR]
+        );
+        self::$client->request($method, $uri, [], [], $headers);
+        $response = self::$client->getResponse();
 
-        return [
-            'no_result' => [ null,    $email ],
-            'no_email'  => [ $result, null   ],
-            'nothing'   => [ null,    null   ],
-        ];
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+        self::assertJson((string) $response->getContent());
+        $r_body = (string) $response->getContent();
+        self::assertStringContainsString(Message::CODE_ATTR, $r_body);
+        self::assertStringContainsString(Message::MESSAGE_ATTR, $r_body);
+        $r_data = json_decode($r_body, true);
+        self::assertSame(Response::HTTP_FORBIDDEN, $r_data[Message::CODE_ATTR]);
+        self::assertSame(
+            '`Forbidden`: you don\'t have permission to access',
+            $r_data[Message::MESSAGE_ATTR]
+        );
     }
 
     /**
@@ -513,6 +527,20 @@ class ApiResultsControllerTest extends BaseTestCase
     }
 
     /**
+     * Route provider (expected status: 403 FORBIDDEN)
+     *
+     * @return array [ method, url ]
+     */
+    public function routeProvider403(): array
+    {
+        return [
+            'postAction403'   => [ Request::METHOD_POST,   self::RUTA_API ],
+            'putAction403'    => [ Request::METHOD_PUT,    self::RUTA_API . '/1' ],
+            'deleteAction403' => [ Request::METHOD_DELETE, self::RUTA_API . '/1' ],
+        ];
+    }
+
+    /**
      * Route provider (expected status 404 NOT FOUND)
      *
      * @return array [ method ]
@@ -523,6 +551,24 @@ class ApiResultsControllerTest extends BaseTestCase
             'getAction404'    => [ Request::METHOD_GET ],
             'putAction404'    => [ Request::METHOD_PUT ],
             'deleteAction404' => [ Request::METHOD_DELETE ],
+        ];
+    }
+
+    /**
+     * Result provider -> 422 status code
+     *
+     * @return array result data
+     */
+    public function resultProvider422(): array
+    {
+        $faker = FakerFactoryAlias::create('es_ES');
+        $email = $faker->email;
+        $result = $faker->randomDigitNotNull;
+
+        return [
+            'no_result' => [ null,    $email ],
+            'no_email'  => [ $result, null   ],
+            'nothing'   => [ null,    null   ],
         ];
     }
 }
