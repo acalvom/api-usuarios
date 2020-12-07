@@ -223,7 +223,7 @@ class ApiResultsControllerTest extends BaseTestCase
      * @return  array modified result data
      * @depends testPostResultAction201Created
      */
-    public function testPutUserAction209ContentReturned(array $resultEnt): array
+    public function testPutResultAction209ContentReturned(array $resultEnt): array
     {
         $updatedResult = self::$faker->randomDigitNotNull;
         $headers = $this->getTokenHeaders();
@@ -250,4 +250,44 @@ class ApiResultsControllerTest extends BaseTestCase
         return $updatedResultEnt['resultEnt'];
     }
 
+    /**
+     * Test PUT /results/{resultId} 404 Bad Request
+     *
+     * @return  void
+     */
+    public function testPutResultAction404BadRequest(): void
+    {
+        $updatedResult = self::$faker->randomDigitNotNull;
+        $headers = $this->getTokenHeaders();
+        $p_data = [
+            Result::RESULT_ATTR => $updatedResult
+        ];
+
+        $noId = self::$faker->numberBetween(20,30);
+
+        self::$client->request(
+            Request::METHOD_PUT,
+            self::RUTA_API . '/' . $noId,
+            [],
+            [],
+            $headers,
+            json_encode($p_data)
+        );
+        $response = self::$client->getResponse();
+        self::assertSame(404, $response->getStatusCode());
+
+        $r_body = (string) $response->getContent();
+        self::assertJson($r_body);
+        self::assertStringContainsString(Message::CODE_ATTR, $r_body);
+        self::assertStringContainsString(Message::MESSAGE_ATTR, $r_body);
+        $r_data = json_decode($r_body, true);
+        self::assertSame(
+            Response::HTTP_NOT_FOUND,
+            $r_data[Message::CODE_ATTR]
+        );
+        self::assertSame(
+            Response::$statusTexts[404],
+            $r_data[Message::MESSAGE_ATTR]
+        );
+    }
 }
