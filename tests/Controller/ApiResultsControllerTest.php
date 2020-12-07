@@ -2,11 +2,8 @@
 
 namespace App\Tests\Controller;
 
-use App\Controller\ApiResultsController;
 use App\Entity\Result;
 use App\Entity\User;
-use DateTime;
-use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -154,5 +151,28 @@ class ApiResultsControllerTest extends BaseTestCase
         self::assertJson($response->getContent());
         $results = json_decode($response->getContent(), true);
         self::assertArrayHasKey('results', $results);
+    }
+
+    /**
+     * Test GET /results 200 Ok (XML)
+     *
+     * @param   array $resultEnt result returned by testPostResultAction201Created()
+     * @return  void
+     * @depends testPostResultAction201Created
+     */
+    public function testCGetAction200XmlOk(array $resultEnt): void
+    {
+        $headers = $this->getTokenHeaders();
+        self::$client->request(
+            Request::METHOD_GET,
+            self::RUTA_API . '/' . $resultEnt['id'] . '.xml',
+            [],
+            [],
+            $headers
+        );
+        $response = self::$client->getResponse();
+        self::assertTrue($response->isSuccessful());
+        self::assertNotNull($response->getEtag());
+        self::assertTrue($response->headers->contains('content-type', 'application/xml'));
     }
 }
