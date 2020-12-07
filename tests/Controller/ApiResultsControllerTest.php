@@ -410,6 +410,43 @@ class ApiResultsControllerTest extends BaseTestCase
     }
 
     /**
+     * Test GET    /results 401 UNAUTHORIZED
+     * Test POST   /results 401 UNAUTHORIZED
+     * Test GET    /results/{resultId} 401 UNAUTHORIZED
+     * Test PUT    /results/{resultId} 401 UNAUTHORIZED
+     * Test DELETE /results/{resultId} 401 UNAUTHORIZED
+     *
+     * @param string $method
+     * @param string $uri
+     * @dataProvider routeProvider401()
+     * @return void
+     * @uses \App\EventListener\ExceptionListener
+     */
+    public function testResultStatus401Unauthorized(string $method, string $uri): void
+    {
+        self::$client->request(
+            $method,
+            $uri,
+            [],
+            [],
+            [ 'HTTP_ACCEPT' => 'application/json' ]
+        );
+        $response = self::$client->getResponse();
+
+        self::assertSame(Response::HTTP_UNAUTHORIZED, $response->getStatusCode());
+        self::assertJson((string) $response->getContent());
+        $r_body = (string) $response->getContent();
+        self::assertStringContainsString(Message::CODE_ATTR, $r_body);
+        self::assertStringContainsString(Message::MESSAGE_ATTR, $r_body);
+        $r_data = json_decode($r_body, true);
+        self::assertSame(Response::HTTP_UNAUTHORIZED, $r_data[Message::CODE_ATTR]);
+        self::assertContains(
+            Response::$statusTexts[401],
+            $r_data[Message::MESSAGE_ATTR]
+        );
+    }
+
+    /**
      * Result provider (incomplete) -> 422 status code
      *
      * @return array result data
@@ -421,10 +458,25 @@ class ApiResultsControllerTest extends BaseTestCase
         $result = $faker->randomDigitNotNull;
 
         return [
-            'no_result' => [ null, $email    ],
-            'no_email'  => [ $result, null  ],
-            'nothing'   => [ null,   null    ],
+            'no_result' => [ null,    $email ],
+            'no_email'  => [ $result, null   ],
+            'nothing'   => [ null,    null   ],
         ];
     }
 
+    /**
+     * Route provider (expected status: 401 UNAUTHORIZED)
+     *
+     * @return array [ method, url ]
+     */
+    public function routeProvider401(): array
+    {
+        return [
+            'cgetAction401'   => [ Request::METHOD_GET,    self::RUTA_API ],
+            'getAction401'    => [ Request::METHOD_GET,    self::RUTA_API . '/1' ],
+            'postAction401'   => [ Request::METHOD_POST,   self::RUTA_API ],
+            'putAction401'    => [ Request::METHOD_PUT,    self::RUTA_API . '/1' ],
+            'deleteAction401' => [ Request::METHOD_DELETE, self::RUTA_API . '/1' ],
+        ];
+    }
 }
