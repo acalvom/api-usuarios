@@ -447,7 +447,39 @@ class ApiResultsControllerTest extends BaseTestCase
     }
 
     /**
-     * Result provider (incomplete) -> 422 status code
+     * Test GET    /results/{resultId} 404 NOT FOUND
+     * Test PUT    /results/{resultId} 404 NOT FOUND
+     * Test DELETE /results/{resultId} 404 NOT FOUND
+     *
+     * @param string $method
+     * @param int $resultId result id. returned by testDeleteResultAction204NoContent()
+     * @dataProvider routeProvider404
+     * @return void
+     * @depends testDeleteResultAction204NoContent
+     */
+    public function testResultStatus404NotFound(string $method, int $resultId): void
+    {
+        $headers = $this->getTokenHeaders();
+        self::$client->request(
+            $method,
+            self::RUTA_API . '/' . $resultId,
+            [],
+            [],
+            $headers
+        );
+        $response = self::$client->getResponse();
+
+        self::assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+        $r_body = (string) $response->getContent();
+        self::assertStringContainsString(Message::CODE_ATTR, $r_body);
+        self::assertStringContainsString(Message::MESSAGE_ATTR, $r_body);
+        $r_data = json_decode($r_body, true);
+        self::assertSame(Response::HTTP_NOT_FOUND, $r_data[Message::CODE_ATTR]);
+        self::assertSame(Response::$statusTexts[404], $r_data[Message::MESSAGE_ATTR]);
+    }
+
+    /**
+     * Result provider -> 422 status code
      *
      * @return array result data
      */
@@ -477,6 +509,20 @@ class ApiResultsControllerTest extends BaseTestCase
             'postAction401'   => [ Request::METHOD_POST,   self::RUTA_API ],
             'putAction401'    => [ Request::METHOD_PUT,    self::RUTA_API . '/1' ],
             'deleteAction401' => [ Request::METHOD_DELETE, self::RUTA_API . '/1' ],
+        ];
+    }
+
+    /**
+     * Route provider (expected status 404 NOT FOUND)
+     *
+     * @return array [ method ]
+     */
+    public function routeProvider404(): array
+    {
+        return [
+            'getAction404'    => [ Request::METHOD_GET ],
+            'putAction404'    => [ Request::METHOD_PUT ],
+            'deleteAction404' => [ Request::METHOD_DELETE ],
         ];
     }
 }
