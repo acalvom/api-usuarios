@@ -181,14 +181,14 @@ class ApiResultsControllerTest extends BaseTestCase
     }
 
     /**
-     * Test POST /users 422 Unprocessable Entity
+     * Test POST /results 422 Unprocessable Entity
      *
      * @param int|null $result
      * @param null|string $email
      * @return void
      * @dataProvider resultProvider422
      */
-    public function testPostUserAction422UnprocessableEntity(?int $result, ?string $email): void
+    public function testPostResultAction422UnprocessableEntity(?int $result, ?string $email): void
     {
         $headers = $this->getTokenHeaders();
         $p_data = [
