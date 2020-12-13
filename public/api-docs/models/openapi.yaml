@@ -536,15 +536,6 @@ components:
           examples:
             response-400-result:
               $ref: '#/components/examples/response-400-user-not-exist'
-    400_ResultrDoesNotExist_BadRequest_Response:
-      description: "`BAD REQUEST`: this result does not exist"
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Message'
-          examples:
-            response-400-result:
-              $ref: '#/components/examples/response-400-result-not-exist'
     401_Unauthorized_Response:
       description: '`Unauthorized`: invalid Authorization header'
       content:

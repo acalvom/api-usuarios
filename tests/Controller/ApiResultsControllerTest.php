@@ -416,6 +416,7 @@ class ApiResultsControllerTest extends BaseTestCase
      * @return  int resultId
      * @depends testPostResultAction201Created
      * @depends testGetResultAction200Ok
+     * @depends testCGetResultsAction200Ok
      * @depends testPutResultAction422UnprocessableEntity
      */
     public function testDeleteResultAction204NoContent(array $resultEnt): int
